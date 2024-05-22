@@ -590,6 +590,7 @@ func prepareConfigDb(t *testing.T, namespace string) {
 	mpi_pfcwd_map := loadConfig(t, "", configPfcwdByte)
 	loadConfigDB(t, rclient, mpi_pfcwd_map)
 }
+
 func prepareStateDb(t *testing.T, namespace string) {
 	rclient := getRedisClientN(t, 6, namespace)
 	defer rclient.Close()
@@ -1165,6 +1166,82 @@ func TestGnmiGetAuthFail(t *testing.T) {
 		t.Log("err: ", err)
 		t.Fatalf("got return code %v, want %v", gotRetStatus.Code(), wantRetCode)
 	}
+}
+
+func TestPFCWDErrors(t *testing.T) {
+	s := createServer(t, 8081)
+	go runServer(t, s)
+
+	mock := gomonkey.ApplyFunc(sdc.GetPfcwdMap, func() (map[string]map[string]string, error)  {
+		return nil, fmt.Errorf("Mock error")
+	})
+	defer mock.Reset()
+
+	tests := []struct {
+		desc    string
+		q       client.Query
+		want    []client.Notification
+		poll    int
+	}{
+		{
+			desc: "query COUNTERS/Ethernet*/Pfcwd",
+			poll: 10,
+			q: client.Query{
+				Target: "COUNTERS_DB",
+				Type:    client.Poll,
+				Queries: []client.Path{{"COUNTERS", "Ethernet*", "Pfcwd"}},
+				TLS:     &tls.Config{InsecureSkipVerify: true},
+			},
+			want: []client.Notification{
+				client.Connected{},
+				client.Sync{},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			q := tt.q
+			q.Addrs = []string{"127.0.0.1:8081"}
+			c := client.New()
+			var gotNoti []client.Notification
+			q.NotificationHandler = func(n client.Notification) error {
+				if nn, ok := n.(client.Update); ok {
+					nn.TS = time.Unix(0, 200)
+					gotNoti = append(gotNoti, nn)
+				} else {
+					gotNoti = append(gotNoti, n)
+				}
+				return nil
+			}
+
+			wg := new(sync.WaitGroup)
+			wg.Add(1)
+
+			go func() {
+				defer wg.Done()
+				if err := c.Subscribe(context.Background(), q); err != nil {
+					t.Errorf("c.Subscribe(): got error %v, expected nil", err)
+				}
+			}()
+
+			wg.Wait()
+
+			for i := 0; i < tt.poll; i++ {
+				err := c.Poll()
+				if err != nil {
+					t.Errorf("c.Poll(): got error %v, expected nil", err)
+				}
+			}
+
+			if len(gotNoti) == 0 {
+				t.Errorf("Expected non zero length of notifications")
+			}
+
+			c.Close()
+		})
+	}
+	s.s.Stop()
 }
 
 func runGnmiTestGet(t *testing.T, namespace string) {

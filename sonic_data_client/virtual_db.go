@@ -110,7 +110,7 @@ func initAliasMap() error {
 func initCountersPfcwdNameMap() error {
 	var err error
 	if len(countersPfcwdNameMap) == 0 {
-		countersPfcwdNameMap, err = getPfcwdMap()
+		countersPfcwdNameMap, err = GetPfcwdMap()
 		if err != nil {
 			return err
 		}
@@ -119,7 +119,7 @@ func initCountersPfcwdNameMap() error {
 }
 
 // Get the mapping between sonic interface name and oids of their PFC-WD enabled queues in COUNTERS_DB
-func getPfcwdMap() (map[string]map[string]string, error) {
+func GetPfcwdMap() (map[string]map[string]string, error) {
 	var pfcwdName_map = make(map[string]map[string]string)
 
 	dbName := "CONFIG_DB"
@@ -166,7 +166,14 @@ func getPfcwdMap() (map[string]map[string]string, error) {
 			log.V(1).Infof("PFC WD not enabled on device")
 			return nil, nil
 		}
-		qos_key := resp[0]
+
+		var qos_key string
+		for _, key := range resp {
+			if !strings.Contains(key, "global") && !strings.Contains(key, "GLOBAL") { // Account for PORT_QOS_MAP|global
+				qos_key = key
+				break
+			}
+		}
 
 		fieldName := "pfc_enable"
 		priorities, err := redisDb.HGet(qos_key, fieldName).Result()
