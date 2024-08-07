@@ -22,8 +22,8 @@ require (
 	github.com/openconfig/gnmi v0.0.0-20200617225440-d2b4e6a45802
 	github.com/openconfig/gnoi v0.0.0-20211029052138-349b3dcd04ec
 	github.com/openconfig/ygot v0.7.1
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
+	golang.org/x/crypto v0.21.0
+	golang.org/x/net v0.23.0
 	google.golang.org/grpc v1.33.2
 	google.golang.org/protobuf v1.26.0
 	gopkg.in/yaml.v2 v2.2.8
@@ -46,8 +46,8 @@ require (
 	github.com/stretchr/testify v1.9.0 // indirect
 	go4.org/intern v0.0.0-20211027215823-ae77deb06f29 // indirect
 	go4.org/unsafe/assume-no-moving-gc v0.0.0-20230525183740-e7c30c78aeb2 // indirect
-	golang.org/x/sys v0.0.0-20211007075335-d3039528d8ac // indirect
-	golang.org/x/text v0.3.3 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 	inet.af/netaddr v0.0.0-20230525184311-b8eac61e914a // indirect
 )
