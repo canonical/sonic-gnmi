@@ -15,8 +15,7 @@ endif
 
 all:
 	$(CP) /usr/share/swss/swsscommon.i .
-	# Copy the corrected interface installed by libswsscommon-dev, then generate
-	# the Go binding from that source of truth.
+	# swsscommon.i is already corrected upstream by libswsscommon-dev; no local $function->$action sed needed
 	$(SWIG) $(SWIG_FLAG) -I/usr/include/swss/ swsscommon.i
 
 clean:
